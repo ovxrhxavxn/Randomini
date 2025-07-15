@@ -20,3 +20,8 @@ uv venv
 .venv\Scripts\activate
 uv add
 ```
+### 3. Запуск приложения
+```bat
+python main.py
+```
+Приложение будет доступно по адресу: http://localhost:8000
