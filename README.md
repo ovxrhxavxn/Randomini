@@ -9,3 +9,14 @@ Randomini - это веб-приложение на FastAPI, которое по
 git clone https://github.com/ovxrhxavxn/Randomini.git
 cd randomini
 ```
+### 2. Настройка виртуального окружения
+Рекомендуется использовать venv для изоляции зависимостей.
+```bat
+pip install uv
+```
+Далее в корне проекта:
+```bat
+uv venv
+.venv\Scripts\activate
+uv add
+```
