@@ -4,8 +4,7 @@ def main():
     
     uvicorn.run(
 
-        'src.app:app',
-        reload=True
+        'src.app:app'
     )
 
 if __name__ == "__main__":
