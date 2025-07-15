@@ -5,7 +5,7 @@ Randomini - это веб-приложение на FastAPI, которое по
 
 ## Установка и настройка
 ### 1. Клонирование репозитория
-bat'''
+bat```
 git clone https://github.com/ovxrhxavxn/Randomini.git
 cd randomini
-'''
+```
