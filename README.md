@@ -29,7 +29,7 @@ uv venv
 ```
 * установим зависимости проекта:
 ```bat
-uv add
+uv add --requirements requirements.txt
 ```
 ### 3. Запуск приложения
 ```bat
