@@ -2,6 +2,7 @@
 
 ## Описание проекта
 Randomini - это веб-приложение на FastAPI, которое позволяет загружать Excel-файлы и случайным образом выбирать значения из них с эффектом "рулетки".
+
 [![chrome-Rm-Vaq2sd-XJ.png](https://i.postimg.cc/htCrN2st/chrome-Rm-Vaq2sd-XJ.png)](https://postimg.cc/BjKHKcRr)
 
 ## Установка и настройка
