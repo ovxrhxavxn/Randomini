@@ -1,0 +1,270 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.gitignore
+.python-version
+main.py
+pyproject.toml
+src/app.py
+src/excel/dependencies.py
+src/excel/repositories.py
+src/excel/router.py
+src/excel/services.py
+src/templates/__init__.py
+src/templates/base.html
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".gitignore">
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+</file>
+
+<file path=".python-version">
+3.12
+</file>
+
+<file path="main.py">
+import uvicorn
+
+def main():
+    
+    uvicorn.run(
+
+        'src.app:app',
+        reload=True
+    )
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="pyproject.toml">
+[project]
+name = "randomini"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.116.1",
+    "jinja2>=3.1.6",
+    "openpyxl>=3.1.5",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.35.0",
+]
+</file>
+
+<file path="src/app.py">
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from fastapi.requests import Request
+
+from .templates import jinja_templates
+from .excel.router import router as excel_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+
+app = FastAPI(
+    title="Randomini"
+)
+
+app.mount('/static', StaticFiles(directory='src/static'), 'static')
+
+@app.get('/', response_class=HTMLResponse)
+def index(request: Request):
+    return jinja_templates.TemplateResponse('base.html', {'request': request})
+
+
+routers = [excel_router]
+
+for router in routers:
+    app.include_router(router)
+</file>
+
+<file path="src/excel/dependencies.py">
+from .services import ExcelService
+from .repositories import ExcelRepository
+
+
+def get_excel_service():
+    return ExcelService(ExcelRepository)
+</file>
+
+<file path="src/excel/repositories.py">
+import io
+from typing import Protocol
+
+import openpyxl
+
+
+class AbstractExcelRepository(Protocol):
+
+    def get_values(self, file_bytes: bytes) -> list[dict]:
+        pass
+
+
+class ExcelRepository:
+
+    def get_values(self, file_bytes: bytes) -> list[dict]:
+        """
+        Парсит XLSX из байтов и возвращает список словарей.
+        Использует openpyxl в режиме read-only для производительности.
+        """
+        workbook = openpyxl.load_workbook(io.BytesIO(file_bytes), read_only=True)
+        sheet = workbook.active
+
+        # Предполагаем, что первая строка - это заголовок
+        headers = [cell.value for cell in sheet[1]]
+        data = []
+
+        # iter_rows() - эффективный итератор
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            data.append(dict(zip(headers, row)))
+
+        return data
+</file>
+
+<file path="src/excel/router.py">
+import asyncio
+from typing import Annotated
+from functools import partial
+from concurrent.futures import ProcessPoolExecutor
+
+from fastapi import APIRouter, UploadFile, Depends
+from fastapi.requests import Request
+
+from .services import ExcelService
+from .dependencies import get_excel_service
+from ..templates import jinja_templates
+
+
+router = APIRouter(
+    prefix='/excel'
+)
+
+@router.post('/upload')
+async def upload_excel(
+
+    request: Request, 
+    file: UploadFile,
+    excel_service: Annotated[ExcelService, Depends(get_excel_service)]
+    
+    ):
+
+    file_bytes = await file.read()
+
+    loop = asyncio.get_running_loop()
+
+    func = partial(excel_service.parse_values, file_bytes)
+
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        values = await loop.run_in_executor(executor, func)
+
+    # return jinja_templates.TemplateResponse(request)
+    return values
+</file>
+
+<file path="src/excel/services.py">
+from typing import TypeAlias
+
+from .repositories import AbstractExcelRepository
+
+
+class ExcelService:
+
+    def __init__(self, excel_repo: type[AbstractExcelRepository]):
+        self._excel_repo = excel_repo()
+
+    def parse_values(self, file_bytes: bytes):
+        data = self._excel_repo.get_values(file_bytes)
+        return data
+</file>
+
+<file path="src/templates/__init__.py">
+from fastapi.templating import Jinja2Templates
+
+
+jinja_templates = Jinja2Templates('src/templates')
+</file>
+
+<file path="src/templates/base.html">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="{{ url_for('static', path='js/htmx/htmx.min.js') }}"></script>
+    <script src="{{ url_for('static', path='js/bootstrap/bootstrap.bundle.min.js') }}"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/bootstrap/bootstrap.min.css') }}">
+
+    <title>{% block title %}Randomini{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', path='favicon.ico') }}">
+
+</head>
+
+<body>
+
+</body>
+
+</html>
+</file>
+
+</files>
