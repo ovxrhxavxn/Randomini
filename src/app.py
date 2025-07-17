@@ -1,3 +1,4 @@
+import webbrowser
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -7,14 +8,18 @@ from fastapi.requests import Request
 
 from .templates import jinja_templates
 from .excel.router import router as excel_router
+from .config import server_config
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    webbrowser.open(url=f'http://{server_config.host}:{server_config.port}', new=2)
     yield
+    
 
 app = FastAPI(
-    title="Randomini"
+    title="Randomini",
+    lifespan=lifespan
 )
 
 app.mount('/static', StaticFiles(directory='src/static'), 'static')
