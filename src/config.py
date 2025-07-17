@@ -6,7 +6,7 @@ class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".conf",
         env_file_encoding="utf-8",
-        extra="ignore"  # Игнорировать лишние переменные в .env
+        extra="ignore"  # Игнорировать лишние переменные в .conf
     )
 
 
